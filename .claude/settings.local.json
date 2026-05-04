@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"https://is.gd/create.php?format=simple&url=https://www.github.com\")"
+    ]
+  }
+}
