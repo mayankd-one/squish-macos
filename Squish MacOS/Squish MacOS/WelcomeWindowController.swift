@@ -79,13 +79,13 @@ final class WelcomeWindowController: NSWindowController {
         ))
 
         // Three feature cards — Figma y=274, x=40 / 220 / 400
-        let cards: [(symbol: String, text: String, x: CGFloat)] = [
-            ("doc.on.doc",             "Copy a long URL.\nAnd get back a short one.", 40),
-            ("internaldrive",          "Your last 5 squishes, ready to re-copy.",     220),
-            ("shield.lefthalf.filled", "Tell Squish which sites to leave alone.",     400)
+        let cards: [(asset: String, text: String, x: CGFloat)] = [
+            ("WelcomeIcon-Copy",   "Copy a long URL.\nAnd get back a short one.", 40),
+            ("WelcomeIcon-Save",   "Your last 5 squishes, ready to re-copy.",     220),
+            ("WelcomeIcon-Shield", "Tell Squish which sites to leave alone.",     400)
         ]
-        for (symbol, text, x) in cards {
-            let card = WelcomeFeatureCard(symbol: symbol, text: text)
+        for (asset, text, x) in cards {
+            let card = WelcomeFeatureCard(iconAsset: asset, text: text)
             card.frame = NSRect(x: x, y: 274, width: 160, height: 144)
             container.addSubview(card)
         }
@@ -143,19 +143,16 @@ private final class FlippedView: NSView {
 
 private final class WelcomeFeatureCard: NSView {
 
-    init(symbol: String, text: String) {
+    init(iconAsset: String, text: String) {
         super.init(frame: .zero)
         wantsLayer = true
         layer?.backgroundColor = NSColor.white.cgColor
         layer?.cornerRadius = 24
         layer?.cornerCurve = .continuous
 
-        // Icon at Figma (20, 20, 24, 24) — card is also flipped
-        let iconConfig = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
-        let icon = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)?
-            .withSymbolConfiguration(iconConfig)
-        let iconView = NSImageView(image: icon ?? NSImage())
-        iconView.contentTintColor = NSColor(white: 0.55, alpha: 1)
+        // Icon at Figma (20, 20, 24, 24) — vector SVG with gradient baked in,
+        // so no tint applied.
+        let iconView = NSImageView(image: NSImage(named: iconAsset) ?? NSImage())
         iconView.imageScaling = .scaleProportionallyUpOrDown
         iconView.frame = NSRect(x: 20, y: 20, width: 24, height: 24)
         addSubview(iconView)
