@@ -66,6 +66,12 @@ class MenuBarController: NSObject {
         // Divider before Blocked websites
         menu.addItem(.separator())
 
+        let aboutItem = NSMenuItem()
+        aboutItem.view = MenuRowView(leftText: "About Squish")
+        aboutItem.action = #selector(openWelcome)
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+
         let blockedItem = NSMenuItem()
         blockedItem.view = MenuRowView(leftText: "Blocked websites")
         blockedItem.action = #selector(openBlockedDomains)
@@ -112,5 +118,9 @@ class MenuBarController: NSObject {
     @objc private func openBlockedDomains() {
         BlockedDomainsWindowController.shared.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    @objc private func openWelcome() {
+        WelcomeWindowController.shared.showWindow(nil)
     }
 }

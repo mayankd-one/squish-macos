@@ -12,6 +12,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleDetectedURL(url)
         }
         clipboardMonitor.start()
+
+        // Show the welcome window once, on first launch.
+        if !WelcomeWindowController.hasSeen {
+            WelcomeWindowController.shared.showWindow(nil)
+        }
     }
 
     private func handleDetectedURL(_ urlString: String) {
