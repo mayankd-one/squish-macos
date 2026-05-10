@@ -9,11 +9,13 @@ class MenuBarController: NSObject {
         super.init()
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         if let button = statusItem.button {
-            button.image = NSImage(
-                systemSymbolName: "link.badge.plus",
-                accessibilityDescription: "Squish"
-            )
-            button.image?.isTemplate = true
+            // Custom template image — black silhouette tinted by the menu bar
+            // appearance. Imageset is marked template via Contents.json so the
+            // alpha channel becomes the mask regardless of source colour.
+            let icon = NSImage(named: "MenuBarIcon")
+            icon?.isTemplate = true
+            icon?.accessibilityDescription = "Squish"
+            button.image = icon
         }
         buildMenu()
         statusItem.menu = menu
