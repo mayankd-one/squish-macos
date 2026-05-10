@@ -86,9 +86,13 @@ class MenuBarController: NSObject {
         let leftText = entry.shortened
             .replacingOccurrences(of: "https://", with: "")
             .replacingOccurrences(of: "http://", with: "")
-        let rightText = entry.siteName.isEmpty
+        let rawSiteName = entry.siteName.isEmpty
             ? (URL(string: entry.original)?.host ?? "")
             : entry.siteName
+        let withoutCom = rawSiteName.hasSuffix(".com")
+            ? String(rawSiteName.dropLast(4))
+            : rawSiteName
+        let rightText = withoutCom.prefix(1).uppercased() + withoutCom.dropFirst()
         item.view = LinkMenuItemView(leftText: leftText, rightText: rightText)
         item.toolTip = entry.original
         item.representedObject = entry.shortened
