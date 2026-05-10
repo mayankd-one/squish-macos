@@ -30,19 +30,23 @@ final class ToggleMenuItemView: NSView {
         switchControl.action = #selector(switchChanged)
 
         let leftPadding: CGFloat = 14
-        let rightPadding: CGFloat = 14
+        let textRightPadding: CGFloat = 14
+        // NSSwitch has ~6pt of internal padding around its visible track,
+        // so use a smaller right inset to make the switch's track align
+        // flush with the text right edge of the other rows.
+        let switchRightPadding: CGFloat = 6
         let labelHeight: CGFloat = 18
 
         label.frame = NSRect(
             x: leftPadding,
             y: (height - labelHeight) / 2,
-            width: 200,
+            width: width - leftPadding - textRightPadding,
             height: labelHeight
         )
 
         let switchSize = switchControl.fittingSize
         switchControl.frame = NSRect(
-            x: width - rightPadding - switchSize.width,
+            x: width - switchRightPadding - switchSize.width,
             y: (height - switchSize.height) / 2,
             width: switchSize.width,
             height: switchSize.height
