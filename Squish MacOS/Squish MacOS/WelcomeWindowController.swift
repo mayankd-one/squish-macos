@@ -86,15 +86,18 @@ final class WelcomeWindowController: NSWindowController {
         ]
         for (asset, text, x) in cards {
             let card = WelcomeFeatureCard(iconAsset: asset, text: text)
-            card.frame = NSRect(x: x, y: 274, width: 160, height: 144)
+            // Card height +8 over the Figma 144 to give the inner text more
+            // bottom breathing room.
+            card.frame = NSRect(x: x, y: 274, width: 160, height: 152)
             container.addSubview(card)
         }
 
-        // Button — Figma (220, 458, 160, 46), centred horizontally
+        // Button — y=474 = original 458 +8 (compensating for taller card) +8
+        // (extra padding below the card row, per request).
         let button = GradientPillButton(title: "Get started") { [weak self] in
             self?.getStartedTapped()
         }
-        button.frame = NSRect(x: 220, y: 458, width: 160, height: 46)
+        button.frame = NSRect(x: 220, y: 474, width: 160, height: 46)
         container.addSubview(button)
     }
 
