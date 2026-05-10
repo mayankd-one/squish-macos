@@ -28,15 +28,9 @@ class MenuBarController: NSObject {
         menu = NSMenu()
         menu.minimumWidth = LinkMenuItemView.preferredWidth + 4
 
-        // "Squish" header — small grey label, no separator after it
-        let titleItem = NSMenuItem(title: "Squish", action: nil, keyEquivalent: "")
-        titleItem.attributedTitle = NSAttributedString(
-            string: "Squish",
-            attributes: [
-                .font: NSFont.systemFont(ofSize: 11, weight: .regular),
-                .foregroundColor: NSColor.tertiaryLabelColor
-            ]
-        )
+        // "Squish" header — custom view so it left-aligns with all other rows
+        let titleItem = NSMenuItem()
+        titleItem.view = MenuRowView(leftText: "Squish", style: .header)
         titleItem.isEnabled = false
         menu.addItem(titleItem)
 
@@ -70,19 +64,18 @@ class MenuBarController: NSObject {
         // Divider before Blocked websites
         menu.addItem(.separator())
 
-        let blockedItem = NSMenuItem(
-            title: "Blocked websites",
-            action: #selector(openBlockedDomains),
-            keyEquivalent: ""
-        )
+        let blockedItem = NSMenuItem()
+        blockedItem.view = MenuRowView(leftText: "Blocked websites")
+        blockedItem.action = #selector(openBlockedDomains)
         blockedItem.target = self
         menu.addItem(blockedItem)
 
-        let quitItem = NSMenuItem(
-            title: "Quit",
-            action: #selector(NSApplication.terminate(_:)),
-            keyEquivalent: "q"
-        )
+        // "⌘Q" rendered as the right-side text. keyEquivalent kept so the
+        // shortcut still works while the menu is open.
+        let quitItem = NSMenuItem()
+        quitItem.view = MenuRowView(leftText: "Quit", rightText: "\u{2318}Q")
+        quitItem.action = #selector(NSApplication.terminate(_:))
+        quitItem.keyEquivalent = "q"
         menu.addItem(quitItem)
     }
 

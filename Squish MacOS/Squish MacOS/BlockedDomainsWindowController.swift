@@ -106,7 +106,9 @@ class BlockedDomainsWindowController: NSWindowController,
     @objc private func removeDomain() {
         let selected = tableView.selectedRowIndexes
         guard !selected.isEmpty else { return }
-        domains.remove(atOffsets: IndexSet(selected))
+        for index in selected.sorted(by: >) {
+            domains.remove(at: index)
+        }
         BlockedDomainsManager.shared.domains = domains
         tableView.reloadData()
     }
