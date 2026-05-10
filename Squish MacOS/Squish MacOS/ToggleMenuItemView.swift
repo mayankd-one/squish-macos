@@ -95,9 +95,14 @@ final class ToggleMenuItemView: NSView {
     override func mouseExited(with event: NSEvent)  { needsDisplay = true }
 
     override func mouseUp(with event: NSEvent) {
-        // Toggle when row is clicked anywhere outside the switch itself
-        let newState: NSControl.StateValue = switchControl.state == .on ? .off : .on
-        switchControl.state = newState
-        onToggle(newState == .on)
+        // If the click landed on the switch itself, NSSwitch has already
+        // toggled its own state and fired switchChanged(). Doing it again
+        // here would silently undo that toggle, so bail out.
+        let location = convert(event.locationInWindow, from: nil)
+        guard !switchControl.frame.contains(location) else { return }
+
+        // Click was on the row outside the switch — toggle programmatically.
+        switchControl.state = (switchControl.state == .on) ? .off : .on
+        onToggle(switchControl.state == .on)
     }
 }
