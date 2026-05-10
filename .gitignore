@@ -19,6 +19,10 @@ build/
 .Spotlight-V100
 .Trashes
 
+# Local build / packaging output
+build/
+dist/
+
 # Swift Package Manager
 .build/
 .swiftpm/
