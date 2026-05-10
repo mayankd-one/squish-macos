@@ -66,6 +66,13 @@ class MenuBarController: NSObject {
         // Divider before Blocked websites
         menu.addItem(.separator())
 
+        let clearItem = NSMenuItem()
+        clearItem.view = MenuRowView(leftText: "Clear history")
+        clearItem.action = #selector(clearHistory)
+        clearItem.target = self
+        clearItem.isEnabled = !HistoryManager.shared.items.isEmpty
+        menu.addItem(clearItem)
+
         let aboutItem = NSMenuItem()
         aboutItem.view = MenuRowView(leftText: "About Squish")
         aboutItem.action = #selector(openWelcome)
@@ -122,5 +129,10 @@ class MenuBarController: NSObject {
 
     @objc private func openWelcome() {
         WelcomeWindowController.shared.showWindow(nil)
+    }
+
+    @objc private func clearHistory() {
+        HistoryManager.shared.clear()
+        refresh()
     }
 }

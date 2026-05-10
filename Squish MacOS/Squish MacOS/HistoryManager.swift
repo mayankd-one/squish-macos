@@ -18,6 +18,11 @@ class HistoryManager {
 
     private init() { load() }
 
+    func clear() {
+        items = []
+        save()
+    }
+
     func add(original: String, shortened: String, siteName: String) {
         // Avoid storing the same shortened URL twice
         guard !items.contains(where: { $0.shortened == shortened }) else { return }
