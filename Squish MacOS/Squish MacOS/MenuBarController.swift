@@ -26,49 +26,50 @@ class MenuBarController: NSObject {
 
     private func buildMenu() {
         menu = NSMenu()
+        menu.minimumWidth = LinkMenuItemView.preferredWidth + 4
 
-        // Header
+        // "Squish" header — small grey label, no separator after it
         let titleItem = NSMenuItem(title: "Squish", action: nil, keyEquivalent: "")
-        titleItem.isEnabled = false
         titleItem.attributedTitle = NSAttributedString(
             string: "Squish",
             attributes: [
-                .font: NSFont.systemFont(ofSize: 11, weight: .semibold),
-                .foregroundColor: NSColor.secondaryLabelColor
+                .font: NSFont.systemFont(ofSize: 11, weight: .regular),
+                .foregroundColor: NSColor.tertiaryLabelColor
             ]
         )
+        titleItem.isEnabled = false
         menu.addItem(titleItem)
-        menu.addItem(.separator())
 
-        // URL history
+        // History rows
         let history = HistoryManager.shared.items
         if history.isEmpty {
-            let emptyItem = NSMenuItem(
-                title: "Copy a URL to squish it",
-                action: nil,
-                keyEquivalent: ""
-            )
-            emptyItem.isEnabled = false
-            menu.addItem(emptyItem)
+            let empty = NSMenuItem()
+            empty.view = LinkMenuItemView(leftText: "No links yet", rightText: "Copy a long URL")
+            empty.isEnabled = false
+            menu.addItem(empty)
         } else {
             for (index, entry) in history.enumerated() {
                 menu.addItem(buildHistoryItem(entry: entry, index: index))
             }
         }
 
+        // Divider before Notifications
         menu.addItem(.separator())
 
-        // Notifications toggle
-        let notifItem = NSMenuItem(
-            title: "Notifications",
-            action: #selector(toggleNotifications),
-            keyEquivalent: ""
+        // Notifications toggle (custom row with NSSwitch)
+        let notifItem = NSMenuItem()
+        notifItem.view = ToggleMenuItemView(
+            text: "Notifications",
+            isOn: NotificationManager.shared.isEnabled,
+            onToggle: { isOn in
+                NotificationManager.shared.isEnabled = isOn
+            }
         )
-        notifItem.target = self
-        notifItem.state = NotificationManager.shared.isEnabled ? .on : .off
         menu.addItem(notifItem)
 
-        // Blocked websites
+        // Divider before Blocked websites
+        menu.addItem(.separator())
+
         let blockedItem = NSMenuItem(
             title: "Blocked websites",
             action: #selector(openBlockedDomains),
@@ -77,9 +78,6 @@ class MenuBarController: NSObject {
         blockedItem.target = self
         menu.addItem(blockedItem)
 
-        menu.addItem(.separator())
-
-        // Quit
         let quitItem = NSMenuItem(
             title: "Quit",
             action: #selector(NSApplication.terminate(_:)),
@@ -90,38 +88,11 @@ class MenuBarController: NSObject {
 
     private func buildHistoryItem(entry: HistoryEntry, index: Int) -> NSMenuItem {
         let item = NSMenuItem()
-
-        let linkLabel = String(format: "link %02d", index + 1)
-        let host = entry.siteName.isEmpty
+        let leftText = String(format: "link %02d", index + 1)
+        let rightText = entry.siteName.isEmpty
             ? (URL(string: entry.original)?.host ?? "")
             : entry.siteName
-
-        let attributed = NSMutableAttributedString()
-
-        attributed.append(NSAttributedString(
-            string: linkLabel,
-            attributes: [
-                .font: NSFont.monospacedSystemFont(ofSize: 13, weight: .regular),
-                .foregroundColor: NSColor.labelColor
-            ]
-        ))
-
-        // Right-align the site name using a tab stop trick via padding
-        let padding = String(repeating: " ", count: max(1, 24 - linkLabel.count))
-        attributed.append(NSAttributedString(
-            string: padding,
-            attributes: [.font: NSFont.systemFont(ofSize: 13)]
-        ))
-
-        attributed.append(NSAttributedString(
-            string: host,
-            attributes: [
-                .font: NSFont.systemFont(ofSize: 13),
-                .foregroundColor: NSColor.tertiaryLabelColor
-            ]
-        ))
-
-        item.attributedTitle = attributed
+        item.view = LinkMenuItemView(leftText: leftText, rightText: rightText)
         item.toolTip = entry.original
         item.representedObject = entry.shortened
         item.action = #selector(copyLink(_:))
@@ -133,11 +104,6 @@ class MenuBarController: NSObject {
         guard let shortened = sender.representedObject as? String else { return }
         NSPasteboard.general.clearContents()
         NSPasteboard.general.setString(shortened, forType: .string)
-    }
-
-    @objc private func toggleNotifications() {
-        NotificationManager.shared.isEnabled.toggle()
-        refresh()
     }
 
     @objc private func openBlockedDomains() {
