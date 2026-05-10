@@ -81,7 +81,11 @@ class MenuBarController: NSObject {
 
     private func buildHistoryItem(entry: HistoryEntry, index: Int) -> NSMenuItem {
         let item = NSMenuItem()
-        let leftText = String(format: "link %02d", index + 1)
+        // Show the shortened URL with the protocol stripped for a cleaner look
+        // (e.g. "tinyurl.com/abc123" instead of "https://tinyurl.com/abc123").
+        let leftText = entry.shortened
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
         let rightText = entry.siteName.isEmpty
             ? (URL(string: entry.original)?.host ?? "")
             : entry.siteName
