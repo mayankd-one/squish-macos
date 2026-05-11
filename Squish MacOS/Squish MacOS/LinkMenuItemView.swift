@@ -86,9 +86,11 @@ final class LinkMenuItemView: NSView {
               let menu = menuItem.menu else { return }
         menu.cancelTracking()
         if let action = menuItem.action {
-            // Pass target as-is — nil is fine, sendAction(to: nil) walks
-            // the responder chain.
-            NSApp.sendAction(action, to: menuItem.target, from: menuItem)
+            // Fall back to NSApp when no explicit target — see MenuRowView
+            // for the full rationale (responder chain isn't reliable for
+            // an LSUIElement status-bar app after cancelTracking).
+            let target: AnyObject? = menuItem.target ?? NSApp
+            NSApp.sendAction(action, to: target, from: menuItem)
         }
     }
 }

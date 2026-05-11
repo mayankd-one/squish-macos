@@ -119,10 +119,16 @@ final class MenuRowView: NSView {
               let menu = menuItem.menu else { return }
         menu.cancelTracking()
         if let action = menuItem.action {
-            // Pass target as-is — it may be nil (e.g. Quit relies on
-            // NSApplication.terminate(_:) being resolved via the responder
-            // chain). sendAction(to: nil, from:) walks the chain for us.
-            NSApp.sendAction(action, to: menuItem.target, from: menuItem)
+            // For menu items with no explicit target (e.g. Quit relying on
+            // NSApplication.terminate(_:)), fall back to NSApp directly.
+            // sendAction(to: nil) is documented to walk the responder chain,
+            // but for an LSUIElement status-bar app with no key/main window
+            // (and after cancelTracking() just tore down the menu window),
+            // the chain doesn't reliably end at NSApp — the action gets
+            // silently dropped. Targeting NSApp explicitly removes the
+            // ambiguity.
+            let target: AnyObject? = menuItem.target ?? NSApp
+            NSApp.sendAction(action, to: target, from: menuItem)
         }
     }
 }
