@@ -85,8 +85,10 @@ final class LinkMenuItemView: NSView {
         guard let menuItem = enclosingMenuItem,
               let menu = menuItem.menu else { return }
         menu.cancelTracking()
-        if let action = menuItem.action, let target = menuItem.target {
-            NSApp.sendAction(action, to: target, from: menuItem)
+        if let action = menuItem.action {
+            // Pass target as-is — nil is fine, sendAction(to: nil) walks
+            // the responder chain.
+            NSApp.sendAction(action, to: menuItem.target, from: menuItem)
         }
     }
 }
