@@ -48,19 +48,11 @@ func renderBackground(into bitmap: NSBitmapImageRep) {
     let titleSize = title.size()
     title.draw(at: NSPoint(x: (width - titleSize.width) / 2, y: height - 60))
 
-    // Squish app icon on the left
+    // Squish app icon on the left. No text label is drawn — Finder will
+    // render the .app's filename underneath the icon in the install window;
+    // a baked-in label would stack on top of it.
     let iconRect = NSRect(x: 100, y: 110, width: 128, height: 128)
     appIcon.draw(in: iconRect)
-
-    let leftLabel = NSAttributedString(
-        string: "Squish",
-        attributes: [
-            .font: NSFont.systemFont(ofSize: 13, weight: .medium),
-            .foregroundColor: NSColor(white: 0.25, alpha: 1)
-        ]
-    )
-    let leftLabelSize = leftLabel.size()
-    leftLabel.draw(at: NSPoint(x: iconRect.midX - leftLabelSize.width / 2, y: iconRect.minY - 24))
 
     // Arrow
     let arrowColor = NSColor(white: 0.55, alpha: 1)
@@ -84,21 +76,12 @@ func renderBackground(into bitmap: NSBitmapImageRep) {
     head.close()
     head.fill()
 
-    // Applications target on the right
+    // Applications target on the right. Same reason as above — Finder will
+    // label the symlink itself, no baked-in caption.
     let appsURL = URL(fileURLWithPath: "/Applications")
     let appsIcon = NSWorkspace.shared.icon(forFile: appsURL.path)
     appsIcon.size = NSSize(width: 128, height: 128)
     appsIcon.draw(in: NSRect(x: 432, y: 110, width: 128, height: 128))
-
-    let rightLabel = NSAttributedString(
-        string: "Applications",
-        attributes: [
-            .font: NSFont.systemFont(ofSize: 13, weight: .medium),
-            .foregroundColor: NSColor(white: 0.25, alpha: 1)
-        ]
-    )
-    let rightLabelSize = rightLabel.size()
-    rightLabel.draw(at: NSPoint(x: 432 + 64 - rightLabelSize.width / 2, y: 110 - 24))
 }
 
 // @2x rendering
