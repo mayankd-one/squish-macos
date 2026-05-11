@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Builds a Release Squish MacOS.app and packages it into a styled .dmg
-# with a custom Finder window background and pre-positioned icons.
+# Builds a Release Squish.app and packages it into a .dmg with a minimal
+# Finder window layout (icons positioned, toolbar hidden, no background).
 #
 # Output: dist/Squish-1.0.dmg
 #
@@ -27,16 +27,10 @@ STAGE="/tmp/squish-build/dmg-staging"
 RW_DMG="/tmp/squish-build/Squish-rw.dmg"
 DIST_DIR="$REPO_ROOT/dist"
 FINAL_DMG="$DIST_DIR/Squish-${DMG_VERSION}.dmg"
-BG_SOURCE="$REPO_ROOT/scripts/dmg-background.png"
-BG_SOURCE_2X="$REPO_ROOT/scripts/dmg-background@2x.png"
 
-WIN_W=660
-WIN_H=400
+WIN_W=520
+WIN_H=320
 ICON_SIZE=128
-
-# --------------------------- preflight ------------------------
-[[ -f "$BG_SOURCE" ]]    || { echo "missing $BG_SOURCE — run scripts/make-dmg-background.swift"; exit 1; }
-[[ -f "$BG_SOURCE_2X" ]] || { echo "missing $BG_SOURCE_2X — run scripts/make-dmg-background.swift"; exit 1; }
 
 # --------------------------- 1. Release build -----------------
 echo "==> Cleaning previous build artifacts"
@@ -67,16 +61,21 @@ APP_SRC="$DERIVED/Build/Products/Release/${APP_NAME}.app"
 
 # --------------------------- 2. Stage layout ------------------
 echo "==> Staging DMG layout"
-mkdir -p "$STAGE/.background"
+mkdir -p "$STAGE"
 # Rename on the way in: build product is "Squish MacOS.app" but we ship it
 # as "Squish.app" so the Finder label in the install window reads cleanly.
 cp -R "$APP_SRC" "$STAGE/${SHIP_APP_NAME}.app"
 ln -s /Applications "$STAGE/Applications"
-cp "$BG_SOURCE"    "$STAGE/.background/background.png"
-cp "$BG_SOURCE_2X" "$STAGE/.background/background@2x.png"
 
-# Strip stray xattrs in the staged copy
+# Strip stray xattrs in the staged copy, AND remove com.apple.quarantine
+# specifically so this DMG (when used locally, not downloaded) installs
+# an app that launches without the Gatekeeper "could not verify" dialog.
+# If the DMG is later downloaded over a network, macOS will re-apply
+# quarantine to the DMG itself; recipients then run scripts/clear-quarantine.sh
+# (or right-click → Open) once. There's no way around that without a paid
+# Apple Developer ID + notarization.
 xattr -cr "$STAGE/${SHIP_APP_NAME}.app"
+xattr -dr com.apple.quarantine "$STAGE/${SHIP_APP_NAME}.app" 2>/dev/null || true
 
 # --------------------------- 3. RW DMG ------------------------
 echo "==> Creating writable DMG"
@@ -109,10 +108,9 @@ tell application "Finder"
         set viewOptions to the icon view options of container window
         set arrangement of viewOptions to not arranged
         set icon size of viewOptions to ${ICON_SIZE}
-        set background picture of viewOptions to file ".background:background.png"
 
-        set position of item "${SHIP_APP_NAME}.app" of container window to {165, 200}
-        set position of item "Applications"          of container window to {496, 200}
+        set position of item "${SHIP_APP_NAME}.app" of container window to {130, 150}
+        set position of item "Applications"          of container window to {390, 150}
 
         update without registering applications
         delay 1
