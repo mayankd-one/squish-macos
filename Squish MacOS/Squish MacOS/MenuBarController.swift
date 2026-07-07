@@ -101,13 +101,11 @@ class MenuBarController: NSObject {
         let leftText = entry.shortened
             .replacingOccurrences(of: "https://", with: "")
             .replacingOccurrences(of: "http://", with: "")
-        let rawSiteName = entry.siteName.isEmpty
-            ? (URL(string: entry.original)?.host ?? "")
-            : entry.siteName
-        let withoutCom = rawSiteName.hasSuffix(".com")
-            ? String(rawSiteName.dropLast(4))
-            : rawSiteName
-        let rightText = withoutCom.prefix(1).uppercased() + withoutCom.dropFirst()
+        // Resolve a friendly product name (e.g. "Google Calendar", "Jira")
+        // from the original URL. Fall back to the stored host if resolution
+        // yields nothing.
+        var rightText = SiteNameResolver.friendlyName(for: entry.original)
+        if rightText.isEmpty { rightText = entry.siteName }
         item.view = LinkMenuItemView(leftText: leftText, rightText: rightText)
         item.toolTip = entry.original
         item.representedObject = entry.shortened
