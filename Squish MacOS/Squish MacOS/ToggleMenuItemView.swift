@@ -5,7 +5,7 @@ final class ToggleMenuItemView: NSView {
     static let preferredHeight: CGFloat = 30
 
     private let label: NSTextField
-    private let switchControl: NSSwitch
+    private let toggle: AccentToggle
     private let onToggle: (Bool) -> Void
 
     private var trackingArea: NSTrackingArea?
@@ -20,21 +20,17 @@ final class ToggleMenuItemView: NSView {
         label.font = .systemFont(ofSize: 13)
         label.textColor = .labelColor
 
-        switchControl = NSSwitch()
-        switchControl.state = isOn ? .on : .off
-        switchControl.controlSize = .mini
+        toggle = AccentToggle(isOn: isOn)
 
         super.init(frame: NSRect(x: 0, y: 0, width: width, height: height))
 
-        switchControl.target = self
-        switchControl.action = #selector(switchChanged)
+        toggle.onToggle = { [weak self] newValue in
+            self?.onToggle(newValue)
+        }
 
         let leftPadding: CGFloat = 14
         let textRightPadding: CGFloat = 14
-        // NSSwitch has ~6pt of internal padding around its visible track,
-        // so use a smaller right inset to make the switch's track align
-        // flush with the text right edge of the other rows.
-        let switchRightPadding: CGFloat = 6
+        let switchRightPadding: CGFloat = 14
         let labelHeight: CGFloat = 18
 
         label.frame = NSRect(
@@ -44,24 +40,20 @@ final class ToggleMenuItemView: NSView {
             height: labelHeight
         )
 
-        let switchSize = switchControl.fittingSize
-        switchControl.frame = NSRect(
-            x: width - switchRightPadding - switchSize.width,
-            y: (height - switchSize.height) / 2,
-            width: switchSize.width,
-            height: switchSize.height
+        let toggleSize = toggle.intrinsicContentSize
+        toggle.frame = NSRect(
+            x: width - switchRightPadding - toggleSize.width,
+            y: (height - toggleSize.height) / 2,
+            width: toggleSize.width,
+            height: toggleSize.height
         )
-        switchControl.autoresizingMask = [.minXMargin]
+        toggle.autoresizingMask = [.minXMargin]
 
         addSubview(label)
-        addSubview(switchControl)
+        addSubview(toggle)
     }
 
     required init?(coder: NSCoder) { fatalError() }
-
-    @objc private func switchChanged() {
-        onToggle(switchControl.state == .on)
-    }
 
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
@@ -95,14 +87,98 @@ final class ToggleMenuItemView: NSView {
     override func mouseExited(with event: NSEvent)  { needsDisplay = true }
 
     override func mouseUp(with event: NSEvent) {
-        // If the click landed on the switch itself, NSSwitch has already
-        // toggled its own state and fired switchChanged(). Doing it again
-        // here would silently undo that toggle, so bail out.
+        // If the click landed on the toggle itself, it has already handled
+        // the state change. Toggling again here would undo it, so bail out.
         let location = convert(event.locationInWindow, from: nil)
-        guard !switchControl.frame.contains(location) else { return }
+        guard !toggle.frame.contains(location) else { return }
 
-        // Click was on the row outside the switch — toggle programmatically.
-        switchControl.state = (switchControl.state == .on) ? .off : .on
-        onToggle(switchControl.state == .on)
+        // Click was on the row outside the toggle — toggle programmatically.
+        toggle.setOn(!toggle.isOn, notify: true)
+    }
+}
+
+/// A small custom toggle that always paints its ON state with the system
+/// accent colour. Unlike NSSwitch, it does not desaturate when its host
+/// window is inactive — which is exactly what happens to NSSwitch inside a
+/// menu, leaving the "on" switch a washed-out grey.
+final class AccentToggle: NSView {
+
+    private(set) var isOn: Bool
+    var onToggle: ((Bool) -> Void)?
+
+    // Dimensions tuned to sit next to 13pt menu text, similar to a mini switch.
+    private let trackWidth: CGFloat = 30
+    private let trackHeight: CGFloat = 18
+    private let knobInset: CGFloat = 2
+
+    init(isOn: Bool) {
+        self.isOn = isOn
+        super.init(frame: NSRect(x: 0, y: 0, width: trackWidth, height: trackHeight))
+        wantsLayer = true
+    }
+
+    required init?(coder: NSCoder) { fatalError() }
+
+    override var intrinsicContentSize: NSSize {
+        NSSize(width: trackWidth, height: trackHeight)
+    }
+
+    override var isFlipped: Bool { false }
+
+    func setOn(_ newValue: Bool, notify: Bool) {
+        guard newValue != isOn else {
+            if notify { onToggle?(isOn) }
+            return
+        }
+        isOn = newValue
+        needsDisplay = true
+        if notify { onToggle?(isOn) }
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let track = bounds
+        let radius = track.height / 2
+
+        // Track — accent when on, neutral grey when off.
+        let trackColor: NSColor = isOn
+            ? .controlAccentColor
+            : NSColor.tertiaryLabelColor
+        trackColor.setFill()
+        NSBezierPath(roundedRect: track, xRadius: radius, yRadius: radius).fill()
+
+        // Knob — white circle, left when off, right when on.
+        let knobDiameter = track.height - knobInset * 2
+        let knobX = isOn
+            ? track.maxX - knobInset - knobDiameter
+            : track.minX + knobInset
+        let knobRect = NSRect(
+            x: knobX,
+            y: track.minY + knobInset,
+            width: knobDiameter,
+            height: knobDiameter
+        )
+
+        // Subtle shadow under the knob for depth.
+        NSGraphicsContext.saveGraphicsState()
+        let shadow = NSShadow()
+        shadow.shadowColor = NSColor.black.withAlphaComponent(0.25)
+        shadow.shadowOffset = NSSize(width: 0, height: -0.5)
+        shadow.shadowBlurRadius = 1
+        shadow.set()
+        NSColor.white.setFill()
+        NSBezierPath(ovalIn: knobRect).fill()
+        NSGraphicsContext.restoreGraphicsState()
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        // Consume the down so the enclosing view doesn't also react; the
+        // actual toggle happens on mouseUp for a natural click feel.
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        let location = convert(event.locationInWindow, from: nil)
+        if bounds.contains(location) {
+            setOn(!isOn, notify: true)
+        }
     }
 }
